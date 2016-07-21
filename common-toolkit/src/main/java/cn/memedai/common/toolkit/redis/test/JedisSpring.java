@@ -10,7 +10,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import cn.memedai.common.toolkit.redis.spring.RedisService;
 
-public class JedisSpring extends Assert{
+public class JedisSpring extends Assert {
 	ApplicationContext appContext = null;
 	RedisService rs = null;
 
