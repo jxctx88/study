@@ -7,7 +7,7 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 
 /**
  * Created by admin on 2016/7/26.
- * 使用Curator 实现分布式是Barrier
+ * 使用Curator【DistributedBarrier】 实现分布式是Barrier
  */
 public class Recipes_Barrier {
     static  String barrier_path = "/curator_recipes_barrier_path";
