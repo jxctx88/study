@@ -1,13 +1,9 @@
-package cn.memedai.common.toolkit.nio.socket;
+package cn.memedai.common.toolkit.nio.selector;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
-import java.util.Scanner;
 
 /**
  * Created by chengtx on 2016/7/22.
