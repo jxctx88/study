@@ -19,11 +19,11 @@
   </properties>
 
   <dependencies>
-    <dependency>
+   <!-- <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-     <!-- <scope>test</scope>-->
-    </dependency>
+     &lt;!&ndash; <scope>test</scope>&ndash;&gt;
+    </dependency>-->
     <!-- jedis-->
     <dependency>
       <groupId>redis.clients</groupId>
@@ -37,7 +37,6 @@
 	<dependency>
 		<groupId>fakepath</groupId>
 		<artifactId>groboutils-core</artifactId>
-		<scope>test</scope>
 	</dependency>
 	<!-- 多线程测试工具 End -->
 	<dependency>
@@ -45,21 +44,13 @@
 	    <artifactId>spring-data-redis</artifactId>
 	    <version>1.6.2.RELEASE</version>
 	</dependency>
-      <dependency>
-          <groupId>org.apache.zookeeper</groupId>
-          <artifactId>zookeeper</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+    </dependency>
 
-      <dependency>
-          <groupId>com.101tec</groupId>
-          <artifactId>zkclient</artifactId>
-      </dependency>
 
-      <dependency>
-          <groupId>org.apache.curator</groupId>
-          <artifactId>curator-recipes</artifactId>
-      </dependency>
-	
   </dependencies>
   
   
@@ -75,8 +66,8 @@
 	        <artifactId>maven-compiler-plugin</artifactId>
 	        <version>2.3.2</version>
 	        <configuration>
-	          <source>1.7</source>
-	          <target>1.7</target>
+	          <source>1.8</source>
+	          <target>1.8</target>
 	          <encoding>UTF-8</encoding>
 	        </configuration>
 	      </plugin>

@@ -17,7 +17,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <junit.version>4.12</junit.version>
+    <junit.version>4.10</junit.version>
     <zookeeper.version>3.4.6</zookeeper.version>
     <zkclient.version>0.4</zkclient.version>
     <curator.version>2.4.2</curator.version>
@@ -38,7 +38,7 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
-      <scope>test</scope>
+      <!--<scope>test</scope>-->
     </dependency>
 
     <!-- Zookeeper 用于分布式服务管理 begin -->
@@ -222,7 +222,7 @@
 		<groupId>fakepath</groupId>
 		<artifactId>groboutils-core</artifactId>
 		<version>5</version>
-		<scope>test</scope>
+		<!--<scope>test</scope>-->
 	</dependency>
 	<!-- 多线程测试工具 End -->
 
