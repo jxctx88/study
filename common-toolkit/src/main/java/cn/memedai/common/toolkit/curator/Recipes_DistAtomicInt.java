@@ -24,6 +24,7 @@ public class Recipes_DistAtomicInt {
         AtomicValue<Integer> rc = atomicInteger.add(8);
         System.out.println(rc.preValue()+":"+rc.postValue());
         System.out.println("Result: "+ rc.succeeded());
+        System.out.println("eee");
     }
 }
 

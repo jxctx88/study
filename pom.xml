@@ -13,6 +13,7 @@
 
   <modules>
     <module>common-toolkit</module>
+      <module>java-base</module>
   </modules>
 
   <properties>
