@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Created by admin on 2016/7/28.
+ * 直接内存申请慢，但是运行速度快，而堆内存申请快，但是运行慢
  */
 public class AccessDirectBuffer {
 
