@@ -1,12 +1,13 @@
 package cn.memedai.common.toolkit.cache.redis;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.ShardedJedisPool;
+
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.log4j.Logger;
-
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisSentinelPool;
 
 /**
  * 
@@ -16,30 +17,31 @@ import redis.clients.jedis.JedisSentinelPool;
  * <p>
  * key规则:项目名_模块名_业务名,所有的key值放在一个类中
  */
-public class RedisUtils {
+public class RedisUtils{
 
-	private static Logger logger = Logger.getLogger(RedisUtils.class);
+	private static Logger logger = LoggerFactory.getLogger(RedisUtils.class);
 
 	/** 默认缓存时间 */
 	private static final int DEFAULT_CACHE_SECONDS = 60 * 60 * 1;// 单位秒 设置成一个钟
 
+	private static JedisPool jedisPool;
 	/** 连接池 (哨兵)**/
-	private static JedisSentinelPool jedisSentinelPool;
+	//private static JedisSentinelPool jedisSentinelPool;
 	/**连接池(分片)*/
-	//private ShardedJedisPool shardedJedisPool;
+	private ShardedJedisPool shardedJedisPool;
 	
-	private static <T> T execute(Function<T,Jedis> fun ){
+	private <T> T execute(Function<T,Jedis> fun ){
 		Jedis jedis = null;
 		try{
 			//从连接池中获取jedis对象
-			jedis = jedisSentinelPool.getResource();
+			jedis = jedisPool.getResource();
 			return fun.callback(jedis);
 		}catch(Exception e){
 			logger.error("redis操作异常",e);
+			throw new RuntimeException("redis操作异常",e);
 		}finally{
 			releaseResource(jedis);
 		}
-		return null;
 	}
 	
 
@@ -48,25 +50,23 @@ public class RedisUtils {
 	 * 
 	 * @param jedis
 	 */
-	private static void releaseResource(Jedis jedis) {
+	private void releaseResource(Jedis jedis) {
 		//关闭，检测连接是否有效，有效则放回到连接池中，无效则重置状态
 		if (jedis != null) {
-			//jedisSentinelPool.returnResource(jedis);Jedis 3.0使用jedis.close();
-			jedis.close();
+			jedisPool.returnResource(jedis);
 		}
 	}
 
 	/**
 	 * 删除Redis中的所有key
 	 * 
-	 * @param jedis
 	 * @throws Exception
 	 */
-	public static String flushAll() {
+	public String flushAll() {
 		return execute(new Function<String, Jedis>() {
 			@Override
-			public String callback(Jedis e) {
-				return e.flushAll();
+			public String callback(Jedis jedis) {
+				return jedis.flushAll();
 			}
 		});
 	}
@@ -81,7 +81,7 @@ public class RedisUtils {
 	 * @return true or false . <br/>
 	 * @throws Exception
 	 */
-	public static Boolean save(Object key, Object object) {
+	public Boolean save(Object key, Object object) {
 		return save(key, object, DEFAULT_CACHE_SECONDS);
 	}
 
@@ -96,12 +96,13 @@ public class RedisUtils {
 	 *            过期时间（单位为秒）.<br/>
 	 * @return true or false .
 	 */
-	public static Boolean save(final Object key, final Object object, final int seconds) {
+	public Boolean save(final Object key, final Object object, final int seconds) {
 		return execute(new Function<Boolean, Jedis>() {
 			@Override
 			public Boolean callback(Jedis jedis) {
-				jedis.set(SerializeUtils.serialize(key), SerializeUtils.serialize(object));
-				jedis.expire(SerializeUtils.serialize(key), seconds);
+				byte[] keyBytes = SerializeUtils.serialize(key);
+				jedis.set(keyBytes, SerializeUtils.serialize(object));
+				jedis.expire(keyBytes, seconds);
 				return true;
 			}
 		});
@@ -116,7 +117,7 @@ public class RedisUtils {
 	 * @return Object .<br/>
 	 * @throws Exception
 	 */
-	public static Object get(final Object key) {
+	public Object get(final Object key) {
 		
 		return execute(new Function<Object, Jedis>() {
 			@Override
@@ -135,12 +136,11 @@ public class RedisUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Boolean del(final Object key) {
+	public Boolean del(final Object key) {
 		
 		return execute(new Function<Boolean, Jedis>() {
 			@Override
 			public Boolean callback(Jedis jedis) {
-				jedis = jedisSentinelPool.getResource();
 				jedis.del(SerializeUtils.serialize(key));
 				return true;
 			}
@@ -155,12 +155,11 @@ public class RedisUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Boolean del(final Object... keys) {
+	public Boolean del(final Object... keys) {
 		
 		return execute(new Function<Boolean, Jedis>() {
 			@Override
 			public Boolean callback(Jedis jedis) {
-				jedis = jedisSentinelPool.getResource();
 				jedis.del(SerializeUtils.serialize(keys));
 				return true;
 			}
@@ -175,12 +174,11 @@ public class RedisUtils {
 	 *            超时时间（单位为秒）
 	 * @return
 	 */
-	public static Boolean expire(final Object key, final int seconds) {
+	public Boolean expire(final Object key, final int seconds) {
 
 		return execute(new Function<Boolean, Jedis>() {
 			@Override
 			public Boolean callback(Jedis jedis) {
-				jedis = jedisSentinelPool.getResource();
 				jedis.expire(SerializeUtils.serialize(key), seconds);
 				return true;
 			}
@@ -196,12 +194,11 @@ public class RedisUtils {
 	 * @param value
 	 * @return
 	 */
-	public static Boolean addHash(final String key, final Object field, final Object value) {
+	public Boolean addHash(final String key, final Object field, final Object value) {
 		
 		return execute(new Function<Boolean, Jedis>() {
 			@Override
 			public Boolean callback(Jedis jedis) {
-				jedis = jedisSentinelPool.getResource();
 				jedis.hset(SerializeUtils.serialize(key), SerializeUtils.serialize(field), SerializeUtils.serialize(value));
 				return true;
 			}
@@ -215,7 +212,7 @@ public class RedisUtils {
 	 * @param field
 	 * @return
 	 */
-	public static Object getHash(final Object key, final Object field) {
+	public Object getHash(final Object key, final Object field) {
 		
 		return execute(new Function<Object, Jedis>() {
 			@Override
@@ -234,7 +231,7 @@ public class RedisUtils {
 	 * @param field
 	 * @return
 	 */
-	public static Boolean delHash(final Object key, final Object field) {
+	public Boolean delHash(final Object key, final Object field) {
 		
 		return execute(new Function<Boolean, Jedis>() {
 			@Override
@@ -251,7 +248,7 @@ public class RedisUtils {
 	 * @param pattern
 	 * @return
 	 */
-	public static Set<byte[]> keys(final String pattern) {
+	public Set<byte[]> keys(final String pattern) {
 		
 		return execute(new Function<Set<byte[]>, Jedis>() {
 			@Override
@@ -269,7 +266,7 @@ public class RedisUtils {
 	 * @param key
 	 * @return
 	 */
-	public static Map<byte[], byte[]> getAllHash(final Object key) {
+	public Map<byte[], byte[]> getAllHash(final Object key) {
 		
 		return execute(new Function<Map<byte[], byte[]>, Jedis>() {
 			@Override
@@ -286,7 +283,7 @@ public class RedisUtils {
 	 * @param key
 	 * @return
 	 */
-	public static Boolean exists(final Object key) {
+	public Boolean exists(final Object key) {
 		
 		return execute(new Function<Boolean, Jedis>() {
 			@Override
@@ -299,12 +296,12 @@ public class RedisUtils {
 		
 	}
 
-	public void setJedisSentinelPool(JedisSentinelPool jedisSentinelPool) {
-		RedisUtils.jedisSentinelPool = jedisSentinelPool;
+	public void setJedisPool(JedisPool jedisPool) {
+		this.jedisPool = jedisPool;
 	}
 
-	public static JedisSentinelPool getJedisSentinelPool() {
-		return jedisSentinelPool;
+	public static JedisPool getJedisPool() {
+		return jedisPool;
 	}
 	
 }
